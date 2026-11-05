@@ -3,7 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bot } from "lucide-react";
+import { Logo } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -32,14 +33,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-12">
-      <div className="w-full max-w-md space-y-6">
-        <Link href="/" className="flex items-center justify-center gap-2 font-semibold">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Bot className="h-4 w-4" />
-          </span>
-          个人 AI 分身
-        </Link>
+    <div className="relative flex min-h-screen items-center justify-center px-4 py-16">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
+      <div className="w-full max-w-[400px] space-y-6">
+        <Logo href="/" className="justify-center" />
         <Card>
           <CardHeader>
             <CardTitle>欢迎回来</CardTitle>
@@ -79,7 +78,7 @@ export default function LoginPage() {
             </form>
             <p className="mt-4 text-center text-sm text-muted-foreground">
               还没有账号？{" "}
-              <Link href="/register" className="font-medium text-primary hover:underline">
+              <Link href="/register" className="font-medium text-info hover:underline">
                 立即注册
               </Link>
             </p>

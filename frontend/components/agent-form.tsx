@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { api, ApiError, type Agent } from "@/lib/api";
 import { DEFAULT_PERSONA } from "@/lib/persona";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, ErrorBanner, Spinner } from "@/components/ui/card";
 
@@ -95,20 +96,14 @@ export function AgentForm({ agent, mode, onSaved }: AgentFormProps) {
               placeholder="后端工程师，专注 Python、FastAPI 与数据平台。"
             />
           </div>
-          <label className="flex items-start gap-3 rounded-lg border p-3">
-            <input
-              type="checkbox"
-              className="mt-1 h-4 w-4 accent-[hsl(var(--primary))]"
+          <div className="rounded-[8px] border p-3">
+            <Checkbox
               checked={isPublic}
-              onChange={(event) => setIsPublic(event.target.checked)}
+              onCheckedChange={setIsPublic}
+              label="公开访问"
+              description="任何拿到链接的人都可以和这个 Agent 对话；私有 Agent 的公开接口会返回 404。"
             />
-            <span className="text-sm">
-              <span className="font-medium">公开访问</span>
-              <span className="block text-muted-foreground">
-                任何拿到链接的人都可以和这个 Agent 对话；私有 Agent 的公开接口会返回 404。
-              </span>
-            </span>
-          </label>
+          </div>
         </CardContent>
       </Card>
 
@@ -136,7 +131,7 @@ export function AgentForm({ agent, mode, onSaved }: AgentFormProps) {
           {saving ? <Spinner /> : null}
           {mode === "create" ? "创建 Agent" : "保存修改"}
         </Button>
-        {saved && mode === "edit" ? <span className="text-sm text-emerald-600">已保存</span> : null}
+        {saved && mode === "edit" ? <span className="text-sm text-success">已保存</span> : null}
       </div>
     </form>
   );

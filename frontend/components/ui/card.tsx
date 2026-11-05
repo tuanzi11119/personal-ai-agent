@@ -4,18 +4,18 @@ import { cn } from "@/lib/utils";
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("rounded-xl border bg-card text-card-foreground shadow-sm", className)}
+      className={cn("rounded-[12px] border bg-card text-card-foreground", className)}
       {...props}
     />
   );
 }
 
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex flex-col space-y-1.5 p-6", className)} {...props} />;
+  return <div className={cn("flex flex-col gap-1 p-5", className)} {...props} />;
 }
 
 export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn("text-lg font-semibold leading-none tracking-tight", className)} {...props} />;
+  return <h3 className={cn("text-base font-medium leading-[1.25] tracking-tight", className)} {...props} />;
 }
 
 export function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
@@ -23,35 +23,11 @@ export function CardDescription({ className, ...props }: React.HTMLAttributes<HT
 }
 
 export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("p-6 pt-0", className)} {...props} />;
+  return <div className={cn("p-5 pt-0", className)} {...props} />;
 }
 
 export function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex items-center p-6 pt-0", className)} {...props} />;
-}
-
-type BadgeProps = React.HTMLAttributes<HTMLSpanElement> & {
-  variant?: "default" | "secondary" | "outline" | "destructive" | "success";
-};
-
-export function Badge({ className, variant = "default", ...props }: BadgeProps) {
-  const styles: Record<string, string> = {
-    default: "border-transparent bg-primary text-primary-foreground",
-    secondary: "border-transparent bg-secondary text-secondary-foreground",
-    outline: "text-foreground",
-    destructive: "border-transparent bg-destructive text-destructive-foreground",
-    success: "border-transparent bg-emerald-100 text-emerald-800",
-  };
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
-        styles[variant],
-        className,
-      )}
-      {...props}
-    />
-  );
+  return <div className={cn("flex items-center p-5 pt-0", className)} {...props} />;
 }
 
 export function Spinner({ className }: { className?: string }) {
@@ -72,14 +48,17 @@ export function ErrorBanner({ message, onDismiss }: { message: string; onDismiss
   return (
     <div
       role="alert"
-      className="flex items-start justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+      className="flex items-start justify-between gap-3 rounded-[8px] border border-destructive/30 bg-[hsl(var(--destructive-soft))] px-3 py-2 text-sm text-destructive"
     >
       <span>{message}</span>
       {onDismiss ? (
-        <button type="button" onClick={onDismiss} className="text-xs uppercase tracking-wide opacity-70 hover:opacity-100">
+        <button type="button" onClick={onDismiss} className="shrink-0 text-xs hover:underline">
           关闭
         </button>
       ) : null}
     </div>
   );
 }
+
+export { Badge } from "@/components/ui/badge";
+export type { BadgeVariant } from "@/components/ui/badge";

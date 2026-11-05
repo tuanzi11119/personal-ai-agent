@@ -4,7 +4,7 @@ const config: Config = {
   darkMode: ["class"],
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./lib/**/*.{ts,tsx}"],
   theme: {
-    container: { center: true, padding: "2rem", screens: { "2xl": "1400px" } },
+    container: { center: true, padding: "1.5rem", screens: { "2xl": "1152px" } },
     extend: {
       colors: {
         border: "hsl(var(--border))",
@@ -23,6 +23,22 @@ const config: Config = {
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+          soft: "hsl(var(--destructive-soft))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+          soft: "hsl(var(--success-soft))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+          soft: "hsl(var(--warning-soft))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+          soft: "hsl(var(--info-soft))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -36,19 +52,61 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        zone: {
+          cs: "hsl(var(--zone-cs))",
+          "cs-soft": "hsl(var(--zone-cs-soft))",
+          teaching: "hsl(var(--zone-teaching))",
+          "teaching-soft": "hsl(var(--zone-teaching-soft))",
+        },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "8px",
+        md: "8px",
+        sm: "6px",
+        xl: "12px",
+      },
+      fontFamily: {
+        sans: [
+          "var(--font-inter)",
+          "PingFang SC",
+          "var(--font-noto)",
+          "Noto Sans SC",
+          "Microsoft YaHei",
+          "WenQuanYi Micro Hei",
+          "system-ui",
+          "sans-serif",
+        ],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
+      },
+      fontSize: {
+        xs: ["12px", { lineHeight: "1.7" }],
+        sm: ["14px", { lineHeight: "1.7" }],
+        base: ["16px", { lineHeight: "1.7" }],
+        lg: ["20px", { lineHeight: "1.25" }],
+        xl: ["24px", { lineHeight: "1.25" }],
+        "2xl": ["32px", { lineHeight: "1.25" }],
+        "3xl": ["48px", { lineHeight: "1.25" }],
+      },
+      boxShadow: {
+        overlay: "var(--shadow-overlay)",
       },
       keyframes: {
-        "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
-        "accordion-up": { from: { height: "var(--radix-accordion-content-height)" }, to: { height: "0" } },
+        "caret-blink": {
+          "0%, 45%": { opacity: "1" },
+          "50%, 100%": { opacity: "0" },
+        },
+        "step-pulse": {
+          "0%, 100%": { transform: "scale(1)", opacity: "1" },
+          "50%": { transform: "scale(0.72)", opacity: "0.45" },
+        },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        "caret-blink": "caret-blink 1s steps(1) infinite",
+        "step-pulse": "step-pulse 1.2s ease-in-out infinite",
       },
     },
   },

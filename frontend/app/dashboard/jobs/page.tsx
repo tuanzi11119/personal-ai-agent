@@ -1,16 +1,9 @@
 import { Suspense } from "react";
-import { JobBoard } from "@/components/job-board";
-import { Spinner } from "@/components/ui/card";
+import { JobBoard, JobListSkeleton } from "@/components/job-board";
 
 export default function JobsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Spinner /> 正在加载岗位…
-        </div>
-      }
-    >
+    <Suspense fallback={<JobListSkeleton />}>
       <JobBoard zone="all" />
     </Suspense>
   );

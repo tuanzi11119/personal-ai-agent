@@ -221,7 +221,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
   try {
     response = await fetch(path, { ...init, headers, credentials: "include", cache: "no-store" });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") throw err;
     throw new ApiError(ERROR_MESSAGES.network_error, 0, "network_error");
   }
   if (response.status === 204) {
@@ -274,16 +275,22 @@ export const api = {
   deleteDocument: (agentId: string, documentId: string) =>
     request<void>(`/api/agents/${agentId}/documents/${documentId}`, { method: "DELETE" }),
 
-  chat: (agentId: string, data: { message: string; conversation_id?: string | null; top_k?: number }) =>
-    request<ChatResponse>(`/api/agents/${agentId}/chat`, jsonBody(data)),
+  chat: (
+    agentId: string,
+    data: { message: string; conversation_id?: string | null; top_k?: number },
+    init?: { signal?: AbortSignal },
+  ) => request<ChatResponse>(`/api/agents/${agentId}/chat`, { ...jsonBody(data), signal: init?.signal }),
   listConversations: (agentId: string) =>
     request<ConversationList>(`/api/agents/${agentId}/conversations`),
   getConversation: (agentId: string, conversationId: string) =>
     request<Conversation>(`/api/agents/${agentId}/conversations/${conversationId}`),
 
   publicAgent: (slug: string) => request<PublicAgent>(`/api/public/agents/${slug}`),
-  publicChat: (slug: string, data: { message: string; conversation_id?: string | null; top_k?: number }) =>
-    request<ChatResponse>(`/api/public/agents/${slug}/chat`, jsonBody(data)),
+  publicChat: (
+    slug: string,
+    data: { message: string; conversation_id?: string | null; top_k?: number },
+    init?: { signal?: AbortSignal },
+  ) => request<ChatResponse>(`/api/public/agents/${slug}/chat`, { ...jsonBody(data), signal: init?.signal }),
   publicConversation: (slug: string, conversationId: string) =>
     request<Conversation>(`/api/public/agents/${slug}/conversations/${conversationId}`),
 
