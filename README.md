@@ -256,7 +256,7 @@ explicitly marked as tone-only and cannot override them.
 
 ```bash
 cd backend
-.venv/Scripts/python.exe -m pytest -q        # 48 tests
+.venv/Scripts/python.exe -m pytest -q        # 55 tests
 cd ..
 node scripts/e2e_check.mjs                   # needs both servers on :3000 and :8000
 ```
