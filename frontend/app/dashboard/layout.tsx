@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bot, LayoutDashboard, LogOut, Settings, User as UserIcon } from "lucide-react";
+import { Bot, Briefcase, LayoutDashboard, LogOut, Settings, User as UserIcon } from "lucide-react";
 import { api, ApiError, type User } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/card";
@@ -46,6 +46,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const navItems = [
     { href: "/dashboard", label: "我的 Agent", icon: LayoutDashboard },
+    { href: "/dashboard/jobs", label: "实习岗位", icon: Briefcase },
     { href: "/dashboard/settings", label: "模型设置", icon: Settings },
   ];
 
@@ -68,7 +69,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </span>
               <span className="hidden sm:inline">个人 AI 分身</span>
             </Link>
-            <nav className="flex items-center gap-1">
+            <nav className="flex items-center gap-1 overflow-x-auto">
               {navItems.map((item) => {
                 const active = item.href === "/dashboard" ? pathname === item.href : pathname.startsWith(item.href);
                 return (

@@ -15,12 +15,13 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api import agents, auth, chat, documents, public, settings_api
+from app.api import agents, auth, chat, documents, jobs, public, settings_api
 from app.core.config import settings
-from app.core.database import engine, get_dialect_name
+from app.core.database import engine, get_dialect_name, session_scope
 from app.core.errors import AppError, app_error_handler, error_payload
 from app.core.logging import configure_logging, get_logger, redact_secrets
 from app.models import Base
+from app.services.job_sync import sync_job_sources
 
 logger = get_logger(__name__)
 
@@ -35,6 +36,8 @@ async def lifespan(_app: FastAPI):
         # PostgreSQL deployments always use Alembic (alembic upgrade head).
         Base.metadata.create_all(engine)
         logger.info("SQLite schema ensured at %s", settings.resolved_database_url)
+    with session_scope() as db:
+        sync_job_sources(db)
     logger.info(
         "LLM provider=%s embedding provider=%s dimension=%s",
         settings.effective_llm_provider,
@@ -147,3 +150,4 @@ app.include_router(documents.router, prefix=settings.api_prefix)
 app.include_router(chat.router, prefix=settings.api_prefix)
 app.include_router(public.router, prefix=settings.api_prefix)
 app.include_router(settings_api.router, prefix=settings.api_prefix)
+app.include_router(jobs.router, prefix=settings.api_prefix)

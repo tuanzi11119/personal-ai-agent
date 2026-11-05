@@ -129,6 +129,26 @@ export type LLMSettingsInput = {
   embedding_dimension?: number | null;
 };
 
+export type JobZone = "cs" | "teaching";
+
+export type Job = {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  zone: JobZone | string;
+  source: string;
+  source_url: string;
+  deadline: string | null;
+  description: string;
+  raw: Record<string, unknown>;
+  is_nenu_related: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type JobList = { items: Job[]; total: number };
+
 export type TestConnectionResult = { ok: boolean; mode: string; model: string | null; detail: string };
 export type HealthStatus = Record<string, unknown>;
 
@@ -272,4 +292,14 @@ export const api = {
     request<LLMSettings>("/api/settings/llm", { method: "PUT", body: JSON.stringify(data) }),
   testSettings: () => request<TestConnectionResult>("/api/settings/llm/test", { method: "POST" }),
   health: () => request<HealthStatus>("/api/health"),
+
+  listJobs: (params?: { zone?: JobZone; q?: string; nenu?: boolean }) => {
+    const search = new URLSearchParams();
+    if (params?.zone) search.set("zone", params.zone);
+    if (params?.q) search.set("q", params.q);
+    if (params?.nenu) search.set("nenu", "true");
+    const qs = search.toString();
+    return request<JobList>(`/api/jobs${qs ? `?${qs}` : ""}`);
+  },
+  getJob: (id: string) => request<Job>(`/api/jobs/${id}`),
 };
