@@ -1,0 +1,105 @@
+# Personal AI Agent Platform - production-ish stack.
+#   cp .env.example .env      # fill in the values marked REQUIRED
+#   docker compose up -d --build
+#   curl http://127.0.0.1:3000/api/health
+#
+# Only the frontend is published; the browser talks to Next.js on :3000 and
+# Next.js proxies /api/* to the backend over the compose network. PostgreSQL is
+# never exposed to the host.
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pai
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: pai
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pai -d pai"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend:
+    build:
+      context: ./backend
+      args:
+        # Optional PyPI mirror for China-region hosts; override in .env.
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      APP_ENV: production
+      DEBUG: "false"
+      DATABASE_URL: postgresql+psycopg://pai:${POSTGRES_PASSWORD}@db:5432/pai
+      STORAGE_DIR: /data/storage
+      CORS_ORIGINS: ${PUBLIC_ORIGIN:-http://127.0.0.1:3000}
+    volumes:
+      - storage:/data/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3).read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    # --proxy-headers + --forwarded-allow-ips make request.client.host the real
+    # visitor IP behind nginx, so per-IP rate limiting does not lump everyone
+    # into one bucket.
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000
+             --proxy-headers --forwarded-allow-ips='*'"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Compiled into .next/routes-manifest.json at build time - must be the
+        # compose-internal DNS name, not localhost.
+        BACKEND_URL: http://backend:8000
+        # Optional npm mirror for China-region hosts; override in .env.
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      BACKEND_URL: http://backend:8000
+    ports:
+      # HTTP_PORT=80 lets a cloud VM that only opens 80/443 serve the app without
+      # nginx; with a reverse proxy on 80 keep the default 3000.
+      - "${HTTP_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  pgdata:
+  storage:
