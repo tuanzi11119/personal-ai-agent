@@ -1,5 +1,7 @@
 # Personal AI Agent Platform
 
+中文说明见 [README.zh-CN.md](README.zh-CN.md)。
+
 A multi-user platform where anyone can turn their resume, notes and projects into a
 personal **AI digital twin** that other people can interview through a public link.
 
