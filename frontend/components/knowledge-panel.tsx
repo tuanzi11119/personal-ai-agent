@@ -3,17 +3,19 @@
 import * as React from "react";
 import { FileText, RefreshCw, Trash2, Upload } from "lucide-react";
 import { api, ApiError, type DocumentItem } from "@/lib/api";
-import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, ErrorBanner, Spinner } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, ErrorBanner } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { formatBytes, formatDate } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn, formatBytes, formatDate } from "@/lib/utils";
 
 const ACCEPTED = ".pdf,.txt,.md,.markdown";
 
 function statusBadge(status: string) {
   if (status === "ready") return <Badge variant="success">已就绪</Badge>;
   if (status === "error") return <Badge variant="destructive">处理失败</Badge>;
-  if (status === "processing") return <Badge variant="secondary">处理中</Badge>;
-  if (status === "pending") return <Badge variant="outline">等待处理</Badge>;
+  if (status === "processing") return <Badge variant="info">处理中</Badge>;
+  if (status === "pending") return <Badge variant="warning">等待处理</Badge>;
   return <Badge variant="outline">{status}</Badge>;
 }
 
@@ -23,6 +25,7 @@ export function KnowledgePanel({ agentId }: { agentId: string }) {
   const [uploading, setUploading] = React.useState(false);
   const [error, setError] = React.useState("");
   const [dragging, setDragging] = React.useState(false);
+  const [pendingDelete, setPendingDelete] = React.useState<DocumentItem | null>(null);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
 
   const load = React.useCallback(async () => {
@@ -47,7 +50,7 @@ export function KnowledgePanel({ agentId }: { agentId: string }) {
       const document = await api.uploadDocument(agentId, file);
       setDocuments((prev) => [document, ...prev.filter((item) => item.id !== document.id)]);
       if (document.status === "error") {
-        setError("「" + document.filename + "」处理失败：" + (document.error_message || "未知错误"));
+        setError(`「${document.filename}」处理失败：${document.error_message || "未知错误"}`);
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "上传失败。");
@@ -57,13 +60,15 @@ export function KnowledgePanel({ agentId }: { agentId: string }) {
     }
   }
 
-  async function remove(document: DocumentItem) {
-    if (!window.confirm("确定删除「" + document.filename + "」吗？它的分块与向量会一并删除。")) return;
+  async function remove() {
+    if (!pendingDelete) return;
     try {
-      await api.deleteDocument(agentId, document.id);
-      setDocuments((prev) => prev.filter((item) => item.id !== document.id));
+      await api.deleteDocument(agentId, pendingDelete.id);
+      setDocuments((prev) => prev.filter((item) => item.id !== pendingDelete.id));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "删除文档失败。");
+    } finally {
+      setPendingDelete(null);
     }
   }
 
@@ -73,10 +78,9 @@ export function KnowledgePanel({ agentId }: { agentId: string }) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">上传知识</CardTitle>
+          <CardTitle>上传知识</CardTitle>
           <CardDescription>
-            支持 PDF、TXT、Markdown，单个文件不超过 10 MB。文件会立即解析、切分并向量化，
-            并且只有这个 Agent 能检索到它。
+            支持 PDF、TXT、Markdown，单个文件不超过 10 MB。文件会立即解析、切分并向量化，并且只有这个 Agent 能检索到它。
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -92,13 +96,13 @@ export function KnowledgePanel({ agentId }: { agentId: string }) {
               const file = event.dataTransfer.files?.[0];
               if (file && !uploading) void upload(file);
             }}
-            className={"flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 text-center transition-colors " +
-              (dragging ? "border-primary bg-accent/60" : "border-input")}
+            className={cn(
+              "flex flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed px-6 py-10 text-center transition-colors",
+              dragging ? "border-info bg-info-soft" : "border-input",
+            )}
           >
-            {uploading ? <Spinner /> : <Upload className="h-5 w-5 text-muted-foreground" />}
-            <p className="text-sm text-muted-foreground">
-              {uploading ? "正在上传并建立索引…" : "把文件拖到这里，或者"}
-            </p>
+            <Upload className="h-5 w-5 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">{uploading ? "正在上传并建立索引…" : "把文件拖到这里，或者"}</p>
             <input
               ref={inputRef}
               type="file"
@@ -109,7 +113,7 @@ export function KnowledgePanel({ agentId }: { agentId: string }) {
                 if (file) void upload(file);
               }}
             />
-            <Button variant="outline" size="sm" disabled={uploading} onClick={() => inputRef.current?.click()}>
+            <Button variant="secondary" size="sm" disabled={uploading} onClick={() => inputRef.current?.click()}>
               选择文件
             </Button>
           </div>
@@ -117,9 +121,9 @@ export function KnowledgePanel({ agentId }: { agentId: string }) {
       </Card>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-base">文档</CardTitle>
+            <CardTitle>文档</CardTitle>
             <CardDescription>知识库中共 {documents.length} 份文件</CardDescription>
           </div>
           <Button variant="ghost" size="sm" onClick={() => void load()}>
@@ -129,13 +133,12 @@ export function KnowledgePanel({ agentId }: { agentId: string }) {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Spinner /> 正在加载文档…
+            <div className="space-y-3">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
             </div>
           ) : documents.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">
-              还没有文档。上传简历或项目笔记，让回答有据可依。
-            </p>
+            <p className="py-6 text-center text-sm text-muted-foreground">还没有文档。上传简历或项目笔记，让回答有据可依。</p>
           ) : (
             <ul className="divide-y">
               {documents.map((document) => (
@@ -151,7 +154,7 @@ export function KnowledgePanel({ agentId }: { agentId: string }) {
                     ) : null}
                   </div>
                   {statusBadge(document.status)}
-                  <Button variant="ghost" size="icon" aria-label="删除文档" onClick={() => void remove(document)}>
+                  <Button variant="ghost" size="icon" aria-label="删除文档" onClick={() => setPendingDelete(document)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </li>
@@ -160,6 +163,18 @@ export function KnowledgePanel({ agentId }: { agentId: string }) {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={pendingDelete != null}
+        title={pendingDelete ? `删除「${pendingDelete.filename}」？` : "删除文档"}
+        description="它的分块与向量会一并删除。"
+        confirmLabel="删除"
+        destructive
+        onConfirm={() => void remove()}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null);
+        }}
+      />
     </div>
   );
 }

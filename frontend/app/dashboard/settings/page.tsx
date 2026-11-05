@@ -4,6 +4,7 @@ import * as React from "react";
 import { CheckCircle2, KeyRound, Save, Server, Zap } from "lucide-react";
 import { api, ApiError, type LLMSettings } from "@/lib/api";
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, ErrorBanner, Spinner } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 
@@ -53,6 +54,19 @@ function modeLabel(mode: string): string {
 
 const CJK = /[\u4e00-\u9fff]/;
 
+// GET /settings/llm creates the row on first read. Dev Strict Mode runs the
+// effect twice; sharing one in-flight request avoids a duplicate insert.
+let settingsRequest: Promise<LLMSettings> | null = null;
+
+function loadSettings(): Promise<LLMSettings> {
+  if (!settingsRequest) {
+    settingsRequest = api.getSettings().finally(() => {
+      settingsRequest = null;
+    });
+  }
+  return settingsRequest;
+}
+
 type LlmPreset = { label: string; base_url: string; model_name: string };
 
 const LLM_PRESETS: LlmPreset[] = [
@@ -75,12 +89,14 @@ export default function ModelSettingsPage() {
   const [testing, setTesting] = React.useState(false);
   const [error, setError] = React.useState("");
   const [message, setMessage] = React.useState("");
+  const [messageTone, setMessageTone] = React.useState<"success" | "warning">("success");
 
   const load = React.useCallback(async () => {
     try {
-      const data = await api.getSettings();
+      const data = await loadSettings();
       setSettings(data);
       setForm(toForm(data));
+      setError("");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "加载模型设置失败。");
     } finally {
@@ -116,6 +132,7 @@ export default function ModelSettingsPage() {
       const saved = await api.saveSettings(payload);
       setSettings(saved);
       setForm(toForm(saved));
+      setMessageTone("success");
       setMessage("设置已保存，之后的新对话会使用这套配置。");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "保存模型设置失败。");
@@ -132,8 +149,10 @@ export default function ModelSettingsPage() {
       const result = await api.testSettings();
       if (result.ok) {
         const detail = `连接成功（${modeLabel(result.mode)}${result.model ? " · " + result.model : ""}）`;
+        setMessageTone("success");
         setMessage(detail);
       } else {
+        setMessageTone("warning");
         setMessage(result.detail && CJK.test(result.detail) ? result.detail : "连接失败：请检查接口地址、模型名称与 API Key 是否正确。");
       }
     } catch (err) {
@@ -146,7 +165,7 @@ export default function ModelSettingsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">模型设置</h1>
+        <h1 className="text-xl font-semibold">模型设置</h1>
         <p className="text-sm text-muted-foreground">
           接入任意 OpenAI 兼容的对话与向量接口，或继续使用平台默认配置。
         </p>
@@ -154,15 +173,23 @@ export default function ModelSettingsPage() {
 
       {error ? <ErrorBanner message={error} onDismiss={() => setError("")} /> : null}
       {message ? (
-        <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        <div
+          className={
+            messageTone === "warning"
+              ? "flex items-center gap-2 rounded-[8px] border border-warning/30 bg-warning-soft px-3 py-2 text-sm text-warning"
+              : "flex items-center gap-2 rounded-[8px] border border-success/30 bg-success-soft px-3 py-2 text-sm text-success"
+          }
+        >
           <CheckCircle2 className="h-4 w-4" />
           {message}
         </div>
       ) : null}
 
       {loading || !settings ? (
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Spinner /> 正在加载设置…
+        <div className="space-y-3">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-48 w-full" />
+          <span className="sr-only">正在加载设置…</span>
         </div>
       ) : (
         <>

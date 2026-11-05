@@ -3,12 +3,17 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { MapPin, Pin, Search } from "lucide-react";
+import { Briefcase, MapPin, Pin, Search } from "lucide-react";
 import { api, ApiError, type Job, type JobZone } from "@/lib/api";
-import { Badge, Card, CardContent, ErrorBanner, Spinner } from "@/components/ui/card";
+import { EmptyState } from "@/components/empty-state";
+import { Badge, Card, CardContent, ErrorBanner } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { Select } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs } from "@/components/ui/tabs";
+import { cn, formatShortDate } from "@/lib/utils";
 
 const ZONES: { key: "all" | JobZone; label: string; href: string }[] = [
   { key: "all", label: "全部", href: "/dashboard/jobs" },
@@ -21,18 +26,29 @@ const ZONE_LABEL: Record<string, string> = {
   teaching: "教师岗",
 };
 
-function formatDeadline(value: string | null): string {
-  if (!value) return "截止日期未公布";
-  const [year, month, day] = value.split("-");
-  if (!year || !month || !day) return value;
-  return `${year}年${Number(month)}月${Number(day)}日`;
-}
+type SortKey = "default" | "deadline" | "updated";
 
 function isPastDeadline(value: string | null): boolean {
   if (!value) return false;
   const today = new Date();
   const stamp = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   return value < stamp;
+}
+
+function ZoneBadge({ zone }: { zone: string }) {
+  if (zone === "cs") return <Badge variant="cs">计算机岗</Badge>;
+  if (zone === "teaching") return <Badge variant="teaching">教师岗</Badge>;
+  return <Badge variant="secondary">{ZONE_LABEL[zone] ?? zone}</Badge>;
+}
+
+export function JobListSkeleton() {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <Skeleton key={index} className="h-24 w-full rounded-[12px]" />
+      ))}
+    </div>
+  );
 }
 
 export function JobBoard({ zone }: { zone: "all" | JobZone }) {
@@ -46,6 +62,8 @@ export function JobBoard({ zone }: { zone: "all" | JobZone }) {
   const [total, setTotal] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
+  const [sort, setSort] = React.useState<SortKey>("default");
+  const [hideExpired, setHideExpired] = React.useState(false);
 
   React.useEffect(() => {
     setDraft(q);
@@ -99,28 +117,31 @@ export function JobBoard({ zone }: { zone: "all" | JobZone }) {
     return qs ? `${href}?${qs}` : href;
   }
 
+  const visible = React.useMemo(() => {
+    const next = jobs.filter((job) => (hideExpired ? !isPastDeadline(job.deadline) : true));
+    if (sort === "deadline") {
+      next.sort((a, b) => (a.deadline ?? "9999").localeCompare(b.deadline ?? "9999"));
+    } else if (sort === "updated") {
+      next.sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+    }
+    return next;
+  }, [jobs, hideExpired, sort]);
+
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">实习岗位</h1>
+      <div className="space-y-1">
+        <h1 className="text-xl font-semibold">实习岗位</h1>
         <p className="max-w-2xl text-sm text-muted-foreground">
           面向东北师范大学同学。计算机岗与教师岗可以分开看，东师相关岗位会排在前面。当前是示例数据，就业网和公开招聘站还没有接入。
         </p>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2">
-          {ZONES.map((item) => {
-            const active = item.key === zone;
-            return (
-              <Link key={item.key} href={zoneHref(item.href)}>
-                <Button variant={active ? "secondary" : "outline"} size="sm" aria-current={active ? "page" : undefined}>
-                  {item.label}
-                </Button>
-              </Link>
-            );
-          })}
-        </div>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <Tabs
+          aria-label="岗位分区"
+          value={zone}
+          items={ZONES.map((item) => ({ value: item.key, label: item.label, href: zoneHref(item.href) }))}
+        />
         <form
           className="flex w-full gap-2 sm:max-w-sm"
           onSubmit={(event) => {
@@ -134,52 +155,76 @@ export function JobBoard({ zone }: { zone: "all" | JobZone }) {
             placeholder="搜索职位、单位或地点"
             aria-label="搜索岗位"
           />
-          <Button type="submit" variant="outline" aria-label="搜索">
+          <Button type="submit" variant="secondary" size="icon" aria-label="搜索">
             <Search className="h-4 w-4" />
           </Button>
         </form>
       </div>
 
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          className="h-4 w-4 rounded border-input"
+      <div className="flex flex-wrap items-center gap-4">
+        <Checkbox
           checked={nenuOnly}
-          onChange={(event) => pushParams({ nenu: event.target.checked ? "1" : null })}
+          onCheckedChange={(checked) => pushParams({ nenu: checked ? "1" : null })}
+          label="只看东师相关"
         />
-        只看东师相关
-      </label>
+        <Checkbox checked={hideExpired} onCheckedChange={setHideExpired} label="隐藏已截止" />
+        <label className="flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">排序</span>
+          <Select
+            aria-label="排序"
+            className="w-36"
+            value={sort}
+            onChange={(event) => setSort(event.target.value as SortKey)}
+          >
+            <option value="default">综合排序</option>
+            <option value="deadline">截止日期</option>
+            <option value="updated">最近更新</option>
+          </Select>
+        </label>
+      </div>
 
       {error ? <ErrorBanner message={error} onDismiss={() => setError("")} /> : null}
 
       {loading ? (
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Spinner /> 正在加载岗位…
-        </div>
-      ) : jobs.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">没有符合条件的岗位。</CardContent>
-        </Card>
+        <JobListSkeleton />
+      ) : visible.length === 0 ? (
+        <EmptyState
+          icon={Briefcase}
+          title="没有符合条件的岗位"
+          description="换个分区或清掉筛选条件后再看一次。"
+          action={
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setHideExpired(false);
+                setSort("default");
+                pushParams({ q: null, nenu: null });
+              }}
+            >
+              清除筛选
+            </Button>
+          }
+        />
       ) : (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">共 {total} 条</p>
           <ul className="grid gap-3">
-            {jobs.map((job) => (
+            {visible.map((job) => (
               <li key={job.id}>
                 <Link href={`/dashboard/jobs/${job.id}`} className="block">
-                  <Card className={cn("transition-colors hover:border-primary/40", job.is_nenu_related && "border-primary/30")}>
-                    <CardContent className="space-y-3 p-5">
+                  <Card className={cn("transition-colors hover:border-foreground/20", job.is_nenu_related && "border-info/40")}>
+                    <CardContent className="space-y-3 p-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="space-y-1">
+                        <div className="min-w-0 space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            {job.is_nenu_related ? <Pin className="h-4 w-4 text-primary" aria-hidden /> : null}
-                            <h2 className="text-base font-semibold">{job.title}</h2>
+                            {job.is_nenu_related ? <Pin className="h-3.5 w-3.5 text-info" aria-hidden /> : null}
+                            <h2 className="text-base font-medium leading-[1.25]">{job.title}</h2>
                           </div>
                           <p className="text-sm text-muted-foreground">{job.company}</p>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="secondary">{ZONE_LABEL[job.zone] ?? job.zone}</Badge>
-                          {job.is_nenu_related ? <Badge variant="success">东师相关</Badge> : null}
+                        <div className="flex flex-wrap gap-1.5">
+                          <ZoneBadge zone={job.zone} />
+                          {job.is_nenu_related ? <Badge variant="info">东师相关</Badge> : null}
                           {job.source === "seed" ? <Badge variant="outline">示例数据</Badge> : null}
                         </div>
                       </div>
@@ -189,7 +234,7 @@ export function JobBoard({ zone }: { zone: "all" | JobZone }) {
                           {job.location || "地点未注明"}
                         </span>
                         <span className={isPastDeadline(job.deadline) ? "text-destructive" : undefined}>
-                          {formatDeadline(job.deadline)}
+                          {job.deadline ? formatShortDate(job.deadline) : formatShortDate(job.created_at)}
                           {isPastDeadline(job.deadline) ? " · 已截止" : ""}
                         </span>
                       </div>

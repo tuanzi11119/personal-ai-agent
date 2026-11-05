@@ -15,7 +15,7 @@ export default function NewAgentPage() {
             返回 Agent 列表
           </Button>
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">创建新的 Agent</h1>
+        <h1 className="text-xl font-semibold">创建新的 Agent</h1>
         <p className="text-sm text-muted-foreground">
           先给分身一个身份和人设，创建完成后就可以上传它的知识库资料。
         </p>

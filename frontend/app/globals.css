@@ -4,59 +4,124 @@
 
 @layer base {
   :root {
+    color-scheme: light;
+    /* Neutrals */
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --foreground: 0 0% 3.9%; /* #0A0A0A */
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --primary: 243 75% 59%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 243 75% 96%;
-    --accent-foreground: 243 75% 35%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 243 75% 59%;
-    --radius: 0.75rem;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    /* Primary button: black / white */
+    --primary: 0 0% 3.9%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 100%;
+    --secondary-foreground: 0 0% 9%; /* #171717 */
+    --muted: 0 0% 96.1%; /* #F5F5F5 */
+    --muted-foreground: 0 0% 32.2%; /* #525252 */
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --border: 0 0% 89.8%; /* #E5E5E5 */
+    --input: 0 0% 89.8%;
+    /* Accent #2563EB — links, focus, selected markers */
+    --ring: 221.2 83.2% 53.3%;
+    --info: 221.2 83.2% 53.3%;
+    --info-foreground: 0 0% 100%;
+    --info-soft: 213.8 100% 96.9%; /* #EFF6FF */
+    /* Semantic */
+    --destructive: 0 72.2% 50.6%; /* #DC2626 */
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 0 85.7% 97.3%;
+    --success: 142.1 76.2% 36.3%; /* #16A34A */
+    --success-foreground: 0 0% 100%;
+    --success-soft: 138.5 76.5% 96.7%;
+    --warning: 32.1 94.6% 43.7%; /* #D97706 */
+    --warning-foreground: 0 0% 100%;
+    --warning-soft: 48 100% 96.1%;
+    /* Job zone tags */
+    --zone-cs: 221.2 83.2% 53.3%; /* #2563EB */
+    --zone-cs-soft: 213.8 100% 96.9%; /* #EFF6FF */
+    --zone-teaching: 161.4 93.5% 30.4%; /* #059669 */
+    --zone-teaching-soft: 151.8 81% 95.9%; /* #ECFDF5 */
+    --radius: 8px;
+    --shadow-overlay: 0 4px 12px rgb(0 0 0 / 0.06);
+    --sidebar-active: 0 0% 96.1%;
   }
 
   .dark {
-    --background: 222 47% 7%;
-    --foreground: 210 40% 96%;
-    --card: 222 47% 10%;
-    --card-foreground: 210 40% 96%;
-    --primary: 243 75% 65%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 96%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 243 40% 22%;
-    --accent-foreground: 210 40% 96%;
-    --destructive: 0 62% 45%;
-    --destructive-foreground: 210 40% 96%;
-    --border: 217 33% 20%;
-    --input: 217 33% 20%;
-    --ring: 243 75% 65%;
+    color-scheme: dark;
+    --background: 0 0% 3.9%; /* #0A0A0A */
+    --foreground: 0 0% 92.9%; /* #EDEDED */
+    --card: 0 0% 6.7%; /* #111111 */
+    --card-foreground: 0 0% 92.9%;
+    --popover: 0 0% 6.7%;
+    --popover-foreground: 0 0% 92.9%;
+    --primary: 0 0% 92.9%;
+    --primary-foreground: 0 0% 3.9%;
+    --secondary: 0 0% 6.7%;
+    --secondary-foreground: 0 0% 92.9%;
+    --muted: 0 0% 9%; /* #171717 */
+    --muted-foreground: 0 0% 63.9%; /* #A3A3A3 */
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 92.9%;
+    --border: 0 0% 14.9%; /* #262626 */
+    --input: 0 0% 14.9%;
+    --ring: 217.2 91.2% 59.8%; /* #3B82F6 */
+    --info: 217.2 91.2% 59.8%;
+    --info-foreground: 0 0% 100%;
+    --info-soft: 217 45% 16%;
+    --destructive: 0 72.2% 50.6%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 0 40% 14%;
+    --success: 142.1 70% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-soft: 142 35% 14%;
+    --warning: 32.1 90% 55%;
+    --warning-foreground: 0 0% 9%;
+    --warning-soft: 32 35% 14%;
+    --zone-cs: 217.2 91.2% 70%;
+    --zone-cs-soft: 217 45% 16%;
+    --zone-teaching: 160 70% 55%;
+    --zone-teaching-soft: 160 35% 14%;
+    --shadow-overlay: 0 4px 12px rgb(0 0 0 / 0.45);
+    --sidebar-active: 0 0% 12%;
   }
 
   * {
     @apply border-border;
   }
 
+  html {
+    font-size: 16px;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-      "Helvetica Neue", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-family: var(--font-inter), "PingFang SC", var(--font-noto), "Noto Sans SC", "Microsoft YaHei",
+      "WenQuanYi Micro Hei", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    line-height: 1.25;
+    letter-spacing: -0.02em;
   }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .bg-sidebar-active {
+    background-color: hsl(var(--sidebar-active));
+  }
+
+  .shadow-overlay {
+    box-shadow: var(--shadow-overlay);
   }
 }
